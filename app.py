@@ -25,7 +25,7 @@ def get_top_tracks():
     token_info = sp_oauth.get_access_token(code)
 
     sp = spotipy.Spotify(auth=token_info['access_token'])
-    results = sp.current_user_top_tracks(limit=50, time_range='medium_term')
+    results = sp.current_user_top_tracks(limit=50, time_range='short_term')
     
     for idx, item in enumerate(results['items']):
         print(f"{idx + 1}. {item['name']} by {item['artists'][0]['name']}")
