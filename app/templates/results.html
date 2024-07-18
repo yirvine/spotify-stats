@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Spotify Wrapped Results</title>
+</head>
+<body>
+    <h1>Your Top 10 Artists and Tracks</h1>
+    
+    <h2>Top 10 Artists</h2>
+    <ul>
+        {% for artist in top_artists %}
+            <li>{{ artist.name }}</li>
+        {% endfor %}
+    </ul>
+
+    <h2>Top 10 Tracks</h2>
+    <ul>
+        {% for track in top_tracks %}
+            <li>{{ track.name }} by {{ track.artists[0].name }}</li>
+        {% endfor %}
+    </ul>
+
+    <a href="{{ url_for('main.home') }}">Back to Home</a>
+</body>
+</html>

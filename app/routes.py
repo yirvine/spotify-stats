@@ -1,12 +1,8 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session, flash, jsonify
-import asyncio
+from flask import Blueprint, render_template, request, redirect, url_for, session
 import os
 import spotipy
-from spotipy import Spotify
 from spotipy.oauth2 import SpotifyOAuth
 from dotenv import load_dotenv
-from flask import send_from_directory
-
 
 load_dotenv()
 
@@ -16,13 +12,12 @@ sp_oauth = SpotifyOAuth(
     client_id=os.getenv('SPOTIPY_CLIENT_ID'),
     client_secret=os.getenv('SPOTIPY_CLIENT_SECRET'),
     redirect_uri=os.getenv('SPOTIPY_REDIRECT_URI'),
-    scope='user-top-read',
-    cache_path='CACHE_PATH'
+    scope='user-top-read'
 )
 
 @bp.route('/')
 def home():
-    print("Home route accessed")
+    print("Accessed home route")
     token_info = session.get("token_info", None)
     if token_info:
         print(f"Token Info in Home: {token_info}")
@@ -30,47 +25,45 @@ def home():
 
 @bp.route('/login')
 def login():
-    print("Login route accessed")
+    print("Accessed login route")
     auth_url = sp_oauth.get_authorize_url()
+    print(f"Auth URL: {auth_url}")  # Debug print
     return redirect(auth_url)
 
 @bp.route('/callback')
 def callback():
-    print("Callback route accessed")
+    print("Accessed callback route")
     session.clear()
     code = request.args.get('code')
-    print("Code received:", code)
+    print(f"Code received: {code}")
     
     if not code:
+        print("Missing code parameter")
         return "Missing code parameter", 400
     try:
         token_info = sp_oauth.get_access_token(code)
-        print("Token info received:", token_info)
+        print(f"Token info received: {token_info}")
     except Exception as e:
-        print("Error getting token info:", e)
+        print(f"Error getting token info: {e}")
         return "Error getting token info", 500
 
     if not token_info:
+        print("Failed to receive token info")
         return "Failed to receive token info", 400
 
     session["token_info"] = token_info
-    print("Session updated with token info:", session.get("token_info"))
-    return redirect(url_for('main.playlists'))
+    print(f"Session updated with token info: {session.get('token_info')}")
 
-@bp.route('/top-artists')
-def top_artists():
-    token_info = session.get('token_info', None)
-    if not token_info:
-        return redirect(url_for('.login'))
-    sp = spotipy.Spotify(auth=token_info['access_token'])
-    results = sp.current_user_top_artists(limit=10, time_range='long_term')
-    return render_template('top_artists.html', artists=results['items'])
+    try:
+        sp = spotipy.Spotify(auth=token_info['access_token'])
 
-@bp.route('/top-tracks')
-def top_tracks():
-    token_info = session.get('token_info', None)
-    if not token_info:
-        return redirect(url_for('.login'))
-    sp = spotipy.Spotify(auth=token_info['access_token'])
-    results = sp.current_user_top_tracks(limit=10, time_range='long_term')
-    return render_template('top_tracks.html', tracks=results['items'])
+        top_artists = sp.current_user_top_artists(limit=10, time_range='long_term')['items']
+        top_tracks = sp.current_user_top_tracks(limit=10, time_range='long_term')['items']
+
+        print(f"Top artists: {top_artists}")
+        print(f"Top tracks: {top_tracks}")
+
+        return render_template('results.html', top_artists=top_artists, top_tracks=top_tracks)
+    except Exception as e:
+        print(f"Error fetching data from Spotify: {e}")
+        return "Error fetching data from Spotify", 500
