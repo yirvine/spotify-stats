@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Top Artists</title>
+</head>
+<body>
+    <h1>Your Top 10 Artists</h1>
+    <ul>
+        {% for artist in artists %}
+            <li>{{ artist.name }}</li>
+        {% endfor %}
+    </ul>
+    <a href="{{ url_for('main.index') }}">Back to Home</a>
+</body>
+</html>
