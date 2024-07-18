@@ -8,11 +8,14 @@ load_dotenv()
 
 bp = Blueprint('main', __name__)
 
+CACHE_PATH = '.spotipyoauthcache'
+
 sp_oauth = SpotifyOAuth(
     client_id=os.getenv('SPOTIPY_CLIENT_ID'),
     client_secret=os.getenv('SPOTIPY_CLIENT_SECRET'),
     redirect_uri=os.getenv('SPOTIPY_REDIRECT_URI'),
-    scope='user-top-read'
+    scope='user-top-read',
+    cache_path=CACHE_PATH
 )
 
 @bp.route('/')
@@ -52,14 +55,31 @@ def callback():
         return "Failed to receive token info", 400
 
     session["token_info"] = token_info
+    sp_oauth.cache_path = CACHE_PATH
+    sp_oauth.save_token_info(token_info)
     print(f"Session updated with token info: {session.get('token_info')}")
 
-    try:
-        sp = spotipy.Spotify(auth=token_info['access_token'])
+    return redirect(url_for('main.results'))
 
+@bp.route('/results')
+def results():
+    print("Accessed results route")
+    token_info = sp_oauth.get_cached_token()
+    if not token_info:
+        print("No cached token, redirecting to login")
+        return redirect(url_for('.login'))
+    
+    if sp_oauth.is_token_expired(token_info):
+        token_info = sp_oauth.refresh_access_token(token_info['refresh_token'])
+        session["token_info"] = token_info
+        sp_oauth.cache_path = CACHE_PATH
+        sp_oauth.save_token_info(token_info)
+    
+    sp = spotipy.Spotify(auth=token_info['access_token'])
+
+    try:
         top_artists = sp.current_user_top_artists(limit=10, time_range='long_term')['items']
         top_tracks = sp.current_user_top_tracks(limit=10, time_range='long_term')['items']
-
         print(f"Top artists: {top_artists}")
         print(f"Top tracks: {top_tracks}")
 

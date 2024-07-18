@@ -13,8 +13,8 @@ def create_app():
     app.config['SESSION_USE_SIGNER'] = True
     app.config['SESSION_KEY_PREFIX'] = 'spotify_'  # Prefix for session keys
     app.config['SESSION_FILE_DIR'] = os.getenv('SESSION_FILE_DIR', './flask_session')
-    app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Allow cross-site cookies
-    app.config['SESSION_COOKIE_SECURE'] = True  # Ensure cookies are only sent over HTTPS
+    # app.config['SESSION_COOKIE_SAMESITE'] = 'None'  # Allow cross-site cookies
+    # app.config['SESSION_COOKIE_SECURE'] = False  # Allow cookies over HTTP for local development
 
     Session(app)  # Initialize server-side session
     CORS(app)  # Enable CORS for all routes
